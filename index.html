@@ -202,39 +202,58 @@ async function sincronizar() {
 }
 
 // ── PARSEAR CSV DO GOOGLE SHEETS ───────────────────────────────────────────
+function parseCSVRow(row) {
+  // Proper CSV parser that handles quoted fields with commas (e.g. "R$ 34.300,00")
+  const result = [];
+  let cur = "", inQ = false;
+  for (let i = 0; i < row.length; i++) {
+    if (row[i] === '"') { inQ = !inQ; }
+    else if (row[i] === ',' && !inQ) { result.push(cur.trim()); cur = ''; }
+    else { cur += row[i]; }
+  }
+  result.push(cur.trim());
+  return result;
+}
+
 function parsearCSV(csv) {
-  const linhas = csv.split("\n").map(l => l.split(",").map(c => c.replace(/^"|"$/g,"").trim()));
+  const linhas = csv.split("\n").map(parseCSVRow);
   const entradas = [], saidas = [];
   let secao = "";
 
   for (const linha of linhas) {
-    const primeira = linha[0] || "";
-    const segunda = linha[1] || "";
+    const col0 = linha[0] || "";
+    const col1 = linha[1] || "";
+    const col4 = linha[4] || "";
+    const allText = linha.join(" ").toUpperCase();
 
-    // Detectar seção
-    if (segunda.toUpperCase().includes("ENTRADA") && primeira.toUpperCase() === "Nº".toUpperCase()) { secao = "entrada"; continue; }
-    if (segunda.toUpperCase().includes("SAIDA") || segunda.toUpperCase().includes("SAÍDA")) { secao = "saida"; continue; }
-    if (segunda.toUpperCase() === "ENTRADAS" || segunda.toUpperCase() === "SAIDAS") { secao = ""; continue; }
-    if (!primeira || primeira.toUpperCase() === "Nº" || segunda.toUpperCase() === "TOTAL" || segunda === "") continue;
+    // Detectar seção pelo header de cada tabela
+    if (allText.includes("ENTRADA") && allText.includes("EXECU")) { secao = "entrada"; continue; }
+    // Transição para saídas: linha com "ITENS" em col1 e col0 vazio, após termos entradas
+    if (col0 === "" && col1.toUpperCase().includes("ITENS") && entradas.length > 0) { secao = "saida"; continue; }
+    // Parar no balanço
+    if (col1.toUpperCase().includes("BALAN")) { break; }
 
-    const num = parseInt(primeira);
-    if (isNaN(num)) continue;
+    // Pular linhas sem número ou que sejam totais
+    const num = parseInt(col0);
+    if (isNaN(num) || col1.toUpperCase().includes("TOTAL")) continue;
 
     const parseVal = v => {
-      if (!v) return 0;
-      return parseFloat(v.replace(/R\$|\s/g,"").replace(/\./g,"").replace(",",".")) || 0;
+      if (!v || v === "") return 0;
+      // Remove R$, spaces, thousand dots, then convert decimal comma to dot
+      return parseFloat(v.replace(/R\$\s*/g,"").replace(/\s/g,"").replace(/\./g,"").replace(",",".")) || 0;
     };
 
     if (secao === "entrada") {
-      entradas.push({ n: num, nome: segunda, valor: parseVal(linha[4] || linha[2]) });
+      entradas.push({ n: num, nome: col1, valor: parseVal(col4) });
     } else if (secao === "saida") {
-      saidas.push({ n: num, nome: segunda, prev: parseVal(linha[4] || linha[2]), exec: parseVal(linha[5] || linha[3]) });
+      saidas.push({ n: num, nome: col1, prev: parseVal(col4), exec: parseVal(linha[5] || "") });
     }
   }
 
   if (entradas.length > 0) dados.entradas = entradas;
   if (saidas.length > 0) dados.saidas = saidas;
   localStorage.setItem("injDados", JSON.stringify(dados));
+  console.log("Parsed:", entradas.length, "entradas,", saidas.length, "saídas");
 }
 
 // ── CÁLCULOS ──────────────────────────────────────────────────────────────

@@ -11,7 +11,7 @@
     body{font-family:"Segoe UI",Arial,sans-serif;background:var(--cinza);color:var(--texto);}
     header{background:linear-gradient(135deg,var(--azul) 0%,var(--azul2) 60%,#0d47a1 100%);color:#fff;padding:22px 40px;display:flex;align-items:center;gap:24px;box-shadow:0 4px 20px rgba(0,0,0,.3);position:relative;overflow:hidden;}
     header::after{content:"";position:absolute;right:-60px;top:-60px;width:300px;height:300px;background:rgba(255,255,255,.04);border-radius:50%;}
-    .logo-wrap img{width:85px;height:85px;object-fit:contain;filter:drop-shadow(0 2px 8px rgba(0,0,0,.4));}
+    .logo-wrap img{width:110px;height:110px;object-fit:contain;filter:drop-shadow(0 2px 8px rgba(0,0,0,.4));}
     .header-text h1{font-size:1.65rem;font-weight:800;line-height:1.1;text-shadow:0 2px 6px rgba(0,0,0,.25);}
     .header-text h1 span{color:var(--dourado2);}
     .header-text h2{font-size:.9rem;font-weight:400;opacity:.85;margin-top:4px;letter-spacing:1.5px;text-transform:uppercase;}
@@ -77,6 +77,14 @@
 </head>
 <body>
 
+
+<!-- BOTÃO FLUTUANTE EDITAR -->
+<div id="floatEdit" style="position:fixed;bottom:30px;right:30px;z-index:999;display:flex;flex-direction:column;gap:10px;">
+  <button id="btnFloatEdit" onclick="ativarEdicao()" style="background:#f9a825;color:#1a3a6b;border:none;border-radius:50px;padding:14px 22px;font-weight:800;font-size:.9rem;cursor:pointer;box-shadow:0 4px 15px rgba(0,0,0,.3);white-space:nowrap;">✏️ Editar Dashboard</button>
+  <button id="btnFloatSave" onclick="salvarEdicao()" style="display:none;background:#2e7d32;color:#fff;border:none;border-radius:50px;padding:14px 22px;font-weight:800;font-size:.9rem;cursor:pointer;box-shadow:0 4px 15px rgba(0,0,0,.3);">💾 Salvar</button>
+  <button id="btnFloatCancel" onclick="cancelarEdicao()" style="display:none;background:#c62828;color:#fff;border:none;border-radius:50px;padding:14px 22px;font-weight:800;font-size:.9rem;cursor:pointer;box-shadow:0 4px 15px rgba(0,0,0,.3);">✖ Cancelar</button>
+  <button onclick="sincronizar()" style="background:#1e5fa8;color:#fff;border:none;border-radius:50px;padding:14px 22px;font-weight:800;font-size:.9rem;cursor:pointer;box-shadow:0 4px 15px rgba(0,0,0,.3);">🔄 Sincronizar</button>
+</div>
 <div class="loading-overlay" id="loadingOverlay">
   <div class="spinner"></div>
   <div>Sincronizando com Google Sheets...</div>
@@ -326,12 +334,18 @@ function ativarEdicao() {
   document.querySelector(".btn-edit").style.display="none";
   document.querySelector(".btn-save").style.display="inline-block";
   document.querySelector(".btn-cancel").style.display="inline-block";
+  document.getElementById("btnFloatEdit").style.display="none";
+  document.getElementById("btnFloatSave").style.display="block";
+  document.getElementById("btnFloatCancel").style.display="block";
 }
 function cancelarEdicao() {
   document.body.classList.remove("edit-mode");
   document.querySelector(".btn-edit").style.display="inline-block";
   document.querySelector(".btn-save").style.display="none";
   document.querySelector(".btn-cancel").style.display="none";
+  document.getElementById("btnFloatEdit").style.display="block";
+  document.getElementById("btnFloatSave").style.display="none";
+  document.getElementById("btnFloatCancel").style.display="none";
 }
 function salvarEdicao() { cancelarEdicao(); localStorage.setItem("injDados",JSON.stringify(dados)); }
 

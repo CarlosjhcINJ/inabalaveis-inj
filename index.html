@@ -350,6 +350,11 @@ function renderTudo() { renderKPIs(); renderTabelaEntradas(); renderTabelaSaidas
 // ── EDIÇÃO MANUAL ─────────────────────────────────────────────────────────
 function ativarEdicao() {
   document.body.classList.add("edit-mode");
+  // Enable editing on all editable elements
+  document.querySelectorAll(".editable").forEach(el => {
+    el.contentEditable = "true";
+    el.style.cursor = "text";
+  });
   document.querySelector(".btn-edit").style.display="none";
   document.querySelector(".btn-save").style.display="inline-block";
   document.querySelector(".btn-cancel").style.display="inline-block";
@@ -359,6 +364,7 @@ function ativarEdicao() {
 }
 function cancelarEdicao() {
   document.body.classList.remove("edit-mode");
+  document.querySelectorAll(".editable").forEach(el => { el.contentEditable = "false"; el.style.cursor = ""; });
   document.querySelector(".btn-edit").style.display="inline-block";
   document.querySelector(".btn-save").style.display="none";
   document.querySelector(".btn-cancel").style.display="none";
@@ -366,9 +372,24 @@ function cancelarEdicao() {
   document.getElementById("btnFloatSave").style.display="none";
   document.getElementById("btnFloatCancel").style.display="none";
 }
-function salvarEdicao() { cancelarEdicao(); localStorage.setItem("injDados",JSON.stringify(dados)); }
+function salvarEdicao() {
+  // Save editable KPI fields
+  const part = document.getElementById("kpiParticipantes");
+  const partSub = document.getElementById("kpiParticipantesSub");
+  if(part) localStorage.setItem("kpiParticipantes", part.textContent.trim());
+  if(partSub) localStorage.setItem("kpiParticipantesSub", partSub.textContent.trim());
+  cancelarEdicao();
+  localStorage.setItem("injDados", JSON.stringify(dados));
+  alert("✅ Alterações salvas!");
+}
 
 // ── INIT: sincronizar ao carregar + a cada 5 minutos ──────────────────────
+// Restore saved editable fields
+const savedPart = localStorage.getItem("kpiParticipantes");
+const savedPartSub = localStorage.getItem("kpiParticipantesSub");
+if(savedPart) document.getElementById("kpiParticipantes").textContent = savedPart;
+if(savedPartSub) document.getElementById("kpiParticipantesSub").textContent = savedPartSub;
+
 sincronizar();
 setInterval(sincronizar, 5 * 60 * 1000);
 </script>
